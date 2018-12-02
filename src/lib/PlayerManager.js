@@ -117,6 +117,7 @@ class PlayerManager extends Collection {
      * @param {string} data.guild Guild id
      * @param {string} data.channel Channel id
      * @param {string} data.host host
+     * @param {?number} data.shard Shard id
      * @param {Object} [options] Options
      * @param {boolean} [options.selfmute=false] Selfmute
      * @param {boolean} [options.selfdeaf=false] Selfdeaf
@@ -132,7 +133,16 @@ class PlayerManager extends Collection {
     join(data, { selfmute = false, selfdeaf = false } = {}) {
         const player = this.get(data.guild);
         if (player) return player;
-        this.client.ws.send({
+        if (this.client.ws.send) this.client.ws.send({
+            op: 4,
+            d: {
+                guild_id: data.guild,
+                channel_id: data.channel,
+                self_mute: selfmute,
+                self_deaf: selfdeaf
+            }
+        });
+        else this.client.ws.shards.get(data.shard).send({
             op: 4,
             d: {
                 guild_id: data.guild,
@@ -151,13 +161,23 @@ class PlayerManager extends Collection {
     /**
      * Leaves voice channel and deletes Player
      * @param {string} guild Guild id
+     * @param {?number} shard Shard id
      * @returns {boolean}
      * @example
      * // Leave the current channel
      * PlayerManager.leave("412180910587379712");
      */
-    leave(guild) {
-        this.client.ws.send({
+    leave(guild, shard) {
+        if (this.client.ws.send) this.client.ws.send({
+            op: 4,
+            d: {
+                guild_id: guild,
+                channel_id: null,
+                self_mute: false,
+                self_deaf: false
+            }
+        });
+        else this.client.ws.shards.get(shard).send({
             op: 4,
             d: {
                 guild_id: guild,
