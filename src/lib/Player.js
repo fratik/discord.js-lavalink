@@ -266,9 +266,19 @@ class Player extends EventEmitter {
      * @private
      */
     updateVoiceState(channel, { selfmute = false, selfdeaf = false } = {}) {
-        this.client.ws.send({
+        if (this.client.ws.send) this.client.ws.send({
             op: 4,
             shard: this.client.shard ? this.client.shard.id : 0,
+            d: {
+                guild_id: this.id,
+                channel_id: channel,
+                self_mute: selfmute,
+                self_deaf: selfdeaf
+            }
+        });
+        else this.client.ws.shards.get(this.client.channels.get(channel).guild.shardID).send({
+            op: 4,
+            shard: this.client.channels.get(channel).guild.shardID || 0,
             d: {
                 guild_id: this.id,
                 channel_id: channel,
